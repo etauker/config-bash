@@ -1,24 +1,8 @@
 const { execSync } = require('child_process');
 let helper = require('../development-setup/lib/helper.js');
 
-var _getFiles = function() {
-    return [
-        { name: ".bashrc" },
-        { name: ".bash_aliases" },
-        { name: ".bash_colours" },
-        { name: ".bash_paths" }
-        // { name: ".bash_profile" },
-    ];
-};
-
-
-
-
 var install = function(oConfig) {
     console.log("-- [config-bash] - install not implemented");
-    // console.log("-- [config-bash] - running install");
-    // helper.changeDirectory(oConfig.platform, oConfig.workspace, "config-bash", oConfig.options.debug);
-    // helper.executeCommand(`bash install.sh --os=${oConfig.platform}`, oConfig.options.debug);
 };
 
 var configure = function(oConfig) {
@@ -28,71 +12,45 @@ var configure = function(oConfig) {
 var backup = function(oConfig) {
     console.log("-- [config-bash] - running backup");
 
+    // Prepare variables
     var sConfigDir = "~";
     var sBackupDir = "./content";
     var currentDate = `date '+%d-%m-%Y %H:%M'`;
     var commitMessage = "Configuration backup on $currentDate";
     var sRepositoryName = "config-bash";
-    // var remote = "origin";
-    // var branch = "master";
-
-
-
     var aBashSettings = oConfig.tools.filter(tool => tool.name === "bash")[0].settings;
-    var aFiles = _getFiles();
-    console.log(aBashSettings);
+    var aFiles = [
+        { name: ".bashrc" },
+        { name: ".bash_aliases" },
+        { name: ".bash_colours" },
+        { name: ".bash_paths" },
+        { name: ".bash_exports" }
+    ];
 
-    // var aProfiledFiles = aFiles.filter(file => file.profiled);
-    // var aNonProfiledFiles = aFiles.filter(file => !file.profiled);
-
+    // Change into user directory and loop through the files
     helper.changeDirectory(oConfig.platform, oConfig.workspace, sRepositoryName, oConfig.options.debug);
-
-    // aProfiledFiles.forEach(sFile => {
-    //     // // Join different profiles and install
-    //     // console.log(`-- Profiled Files ${sConfigDir}/${sFile.name}`);
-    //     // var sCurrentContent = helper.loadFile(`${sConfigDir}/${sFile.name}`, oConfig.options.debug);
-    //     // console.log(sCurrentContent);
-    //     // // TODO: Get the correct profile
-    //     //
-    //     //
-    //     //
-    //     // console.log(sCurrentContent);
-    // });
-
     aFiles.forEach(aFile => {
-
-
 
         // Load the current config
         var sCurrentContent = helper.loadFile(`${sConfigDir}/${aFile.name}`, oConfig.options.debug);
-
         if (sCurrentContent) {
 
             // Identify used profiles
-            var rStartDividerRegex = /.*=== (\w+) ===.*/g;
+            var rStartDividerRegex = /.*=== (\w+) ===.*/g;  // divider looks like: === Name ===
             var rProfileNameRegex = /.*=== (\w+) ===.*/;
             var aDividers = sCurrentContent.match(rStartDividerRegex);
-            var aProfileList = aDividers.map(sDivider => {
-                var mat = sDivider.match(rProfileNameRegex);
-                return mat[1];
-            });
-            // console.log(aProfileList);
-            // var aNewProfileList = aProfileList.map(oProfile => !aBashSettings.includes(oProfile);
+            var aProfileList = aDividers.map(sDivider => sDivider.match(rProfileNameRegex)[1]);
 
+            // Extract sections of each file
             aProfileList.forEach(sProfile => {
-                // // Load the the repo config
-                // var sProfileContent = helper.loadFile(`${sBackupDir}/${sProfile}/${aFile.name}`, oConfig.options.debug);
-                //
-                // let rSectionRegex = /((.|\n|\r)*)/
-                // var aSectionContent = sCurrentContent.match(rSectionRegex);
                 var bWithinSection = false;
                 var aCurrentContentLines = sCurrentContent.split("\n");
                 var aFilteredContentLines = aCurrentContentLines.filter(sLine => {
-                    if (sLine.indexOf("=== " + sProfile + " ===") !== -1) {
+                    if (sLine.toLowerCase().indexOf("=== " + sProfile.toLowerCase() + " ===") !== -1) {
                         bWithinSection = true;
                         return false;
                     }
-                    else if (sLine.indexOf("=== /" + sProfile + " ===") !== -1) {
+                    else if (sLine.toLowerCase().indexOf("=== /" + sProfile.toLowerCase() + " ===") !== -1) {   // end divider looks like: === /Name ===
                         bWithinSection = false;
                         return false;
                     }
@@ -104,42 +62,11 @@ var backup = function(oConfig) {
                         return false;
                     }
                 });
+
+                // Stitch the lines back together and save file backup
                 var sFilteredContent = aFilteredContentLines.join("\n");
-                console.log(sFilteredContent);
-
-                helper.saveFile(sFilteredContent, `${sBackupDir}/${sProfile}/${aFile.name}`, oConfig.options.debug);
-
-                // For each file...
-                // Check if the current config has this profile
-                // If it does
-                // Overwrite profile section in current config with the repo config
-                // Otherwise
-                // Generate section separator
-                // Print the repo config
-                // Print section end
-                // Delete previous file if one exists
-                // Save the new content to the file
-
+                helper.saveFile(sFilteredContent, `${sBackupDir}/${sProfile.toLowerCase()}/${aFile.name}`, oConfig.options.debug);
             });
-
-        // helper.changeDirectory(oConfig.platform, oConfig.workspace, "");
-        // var sRepositoryName = helper.extractRepoName(oToolConfig.repository);
-        // if (fs.existsSync(sRepositoryName) || helper.cloneRepository(oToolConfig.repository, oConfig.options.debug)) {
-        //     helper.changeDirectory(oConfig.platform, oConfig.workspace, sRepositoryName);
-        //     helper.executeCommand(`git fetch origin`);
-        //     helper.executeCommand(`git checkout ${oToolConfig.branch}`);
-        //     helper.executeCommand(`git pull origin ${oToolConfig.branch}`);
-        // }
-
-        // // Join different profiles and install
-        // console.log(`-- Profiled Files ${sConfigDir}/${sFile.name}`);
-        // var sCurrentContent = helper.loadFile(`${sConfigDir}/${sFile.name}`, oConfig.options.debug);
-        // console.log(sCurrentContent);
-        // // TODO: Get the correct profile
-        //
-        //
-        //
-        // console.log(sCurrentContent);]
         }
     });
 
