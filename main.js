@@ -13,19 +13,20 @@ var backup = function(oConfig) {
     console.log("-- [config-bash] - running backup");
 
     // Prepare variables
-    var sConfigDir = "~";
-    var sBackupDir = "./content";
-    var sCommitMessage = "Configuration backup on " + helper.getDisplayDate();
+    var aSettings = oConfig.tools.filter(tool => tool.name === "bash")[0].settings;
+    var sConfigDir = aSettings.configDirectory || "~";
+    var sBackupDir = aSettings.backupDirectory || "./content";
+    var sCommitMessage = aSettings.commitMessage || "Configuration backup on " + helper.getDisplayDate();
     var sRepositoryName = "config-bash";
-    var sBranch = "master";
-    var aBashSettings = oConfig.tools.filter(tool => tool.name === "bash")[0].settings;
-    var aFiles = [
+    var sBranch = aSettings.branch || "master";
+    var aFiles = aSettings.files || [
         { name: ".bashrc" },
         { name: ".bash_aliases" },
         { name: ".bash_colours" },
         { name: ".bash_paths" },
         { name: ".bash_exports" }
     ];
+
     // Change into user directory and loop through the files
     helper.changeDirectory(oConfig.platform, oConfig.workspace, sRepositoryName, oConfig.options.debug);
     aFiles.forEach(aFile => {
