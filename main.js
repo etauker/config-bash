@@ -15,9 +15,9 @@ var backup = function(oConfig) {
     // Prepare variables
     var sConfigDir = "~";
     var sBackupDir = "./content";
-    var currentDate = `date '+%d-%m-%Y %H:%M'`;
-    var commitMessage = "Configuration backup on $currentDate";
+    var sCommitMessage = "Configuration backup on " + helper.getDisplayDate();
     var sRepositoryName = "config-bash";
+    var sBranch = "master";
     var aBashSettings = oConfig.tools.filter(tool => tool.name === "bash")[0].settings;
     var aFiles = [
         { name: ".bashrc" },
@@ -26,7 +26,6 @@ var backup = function(oConfig) {
         { name: ".bash_paths" },
         { name: ".bash_exports" }
     ];
-
     // Change into user directory and loop through the files
     helper.changeDirectory(oConfig.platform, oConfig.workspace, sRepositoryName, oConfig.options.debug);
     aFiles.forEach(aFile => {
@@ -70,10 +69,10 @@ var backup = function(oConfig) {
         }
     });
 
-
-
-
-    // echo -e "${GREEN}Bash configuration backup complete.${RESET}"
+    helper.executeCommand(`git add "${sBackupDir}"`);
+    helper.executeCommand(`git commit -m "${sCommitMessage}"`);
+    helper.executeCommand(`git pull origin ${sBranch}`);
+    helper.executeCommand(`git push origin ${sBranch}`);
 };
 
 module.exports.install = install;
