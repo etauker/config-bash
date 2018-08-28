@@ -1,0 +1,1 @@
+alias lsbash='ls -la ~/ | grep .bash'
